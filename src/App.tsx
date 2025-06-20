@@ -103,19 +103,23 @@ function App() {
             <p className="bg-white/5 text-red-200/50 text-sm p-2 rounded-lg hidden md:block">
               Note: Refreshing of browser will lead to loss of data
             </p>
-            <Tooltip>
-              <TooltipTrigger>
-                <button
-                  disabled
-                  className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
-                >
-                  <Info className="text-red-500" size={20} />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="text-red-500" side="bottom">
-                Note: Refreshing of browser will lead to loss of data
-              </TooltipContent>
-            </Tooltip>
+
+            <div className="block md:hidden">
+              <Tooltip>
+                <TooltipTrigger>
+                  <button
+                    disabled
+                    className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
+                  >
+                    <Info className="text-red-500" size={20} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="text-red-500" side="bottom">
+                  Note: Refreshing of browser will lead to loss of data
+                </TooltipContent>
+              </Tooltip>
+            </div>
+
             <Tooltip>
               <TooltipTrigger>
                 <button
