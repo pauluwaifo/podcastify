@@ -52,12 +52,12 @@ function App() {
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;
-  
+
     if (prompt.trim() === "") {
       el.style.height = "40px";
     } else {
-      el.style.height = "auto"; 
-      el.style.height = `${el.scrollHeight}px`; 
+      el.style.height = "auto";
+      el.style.height = `${el.scrollHeight}px`;
     }
   }, [prompt]);
 
@@ -175,7 +175,7 @@ function App() {
           </div>
         )}
         {/* footer */}
-        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center pb-4 px-4 bg-[#1E1E1E]">
+        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center pb-2 sm:pb-2  px-4 bg-[#1E1E1E]">
           <form
             onSubmit={(e) => handleSubmit(e)}
             className="flex flex-col items-center justify-between border w-[500px] md:w-170 border-[#2C2C2C] bg-[#232323] px-4 py-3 rounded-2xl gap-2"
@@ -244,22 +244,6 @@ function App() {
                 }}
                 className="w-full px-4  rounded-md bg-transparent text-white placeholder:text-[#666] outline-none resize-none overflow-y-auto custom-scrollbar max-h-100"
               />
-
-              <button
-                type="submit"
-                disabled={loading || (prompt.length === 0 && !fileContent)}
-                className={`p-2 rounded-lg ${
-                  prompt.length > 0 || fileContent
-                    ? "opacity-100 cursor-pointer"
-                    : "opacity-30 cursor-not-allowed"
-                }`}
-              >
-                {loading ? (
-                  <LoaderCircle className="animate-spin text-white" size={20} />
-                ) : (
-                  <SendHorizontal className="text-white" size={20} />
-                )}
-              </button>
             </div>
 
             {/* form footer */}
@@ -297,6 +281,25 @@ function App() {
                   type="number"
                   onChange={(e) => setTargetLength(e.target.value)}
                 />
+
+                <button
+                  type="submit"
+                  disabled={loading || (prompt.length === 0 && !fileContent)}
+                  className={`p-2 rounded-full bg-white ${
+                    prompt.length > 0 || fileContent
+                      ? "opacity-100 cursor-pointer"
+                      : "opacity-30 cursor-not-allowed"
+                  }`}
+                >
+                  {loading ? (
+                    <LoaderCircle
+                      className="animate-spin text-black"
+                      size={20}
+                    />
+                  ) : (
+                    <SendHorizontal className="text-black rotate-[-90deg]" size={20} />
+                  )}
+                </button>
               </div>
             </div>
           </form>
