@@ -6,6 +6,7 @@ import {
   Link,
   User2,
   LoaderCircle,
+  Info,
 } from "lucide-react";
 import "./App.css";
 import { useState } from "react";
@@ -54,10 +55,13 @@ function App() {
         formData.append("files", fileContent); // match backend key name
       }
 
-      const res = await fetch("https://podcastify-xq9b.onrender.com/api/genai/generate", {
-        method: "POST",
-        body: formData, // no need for content-type
-      });
+      const res = await fetch(
+        "https://podcastify-xq9b.onrender.com/api/genai/generate",
+        {
+          method: "POST",
+          body: formData, // no need for content-type
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
@@ -82,18 +86,36 @@ function App() {
   };
 
   return (
-    <div className="flex flex-col flex-wrap items-center justify-center h-screen min-h-screen bg-[#121212] p-0 md:p-3 ">
+    <div className="flex flex-col flex-wrap items-center justify-center h-screen max-h-screen bg-[#121212] p-0 md:p-3 ">
       <div className="shadow-xl w-full h-full border border-[#2C2C2C] rounded-none md:rounded-lg bg-[#1E1E1E] relative overflow-hidden">
         {/* topbar */}
-        <div className="absolute left-0 top-0 w-full flex items-center flex-wrap mb-8 p-1 bg-[#232323] rounded-t-lg border-b border-[#2C2C2C]">
+        <div className="absolute left-0 top-0 w-full flex flex-row items-center mb-8 p-1 bg-[#232323] rounded-t-lg border-b border-[#2C2C2C]">
           <div className="basis-2/12 md:basis-3/12 px-4">
-            <h1 className="text-white text-lg font-bold hidden md:block">Podcast Generator</h1>
-            <h1 className="text-white text-lg font-bold sm:hidden block">PDG</h1>
+            <h1 className="text-white text-lg font-bold hidden md:block">
+              Podcast Generator
+            </h1>
+            <h1 className="text-white text-lg font-bold sm:hidden block">
+              PDG
+            </h1>
           </div>
-          <div className="basis-10/12 md:basis-9/12 flex flex-row items-center gap-4 justify-end">
-            <p className="bg-white/5 text-red-200/50 text-sm p-2 rounded-lg">
+
+          <div className="basis-10/12 md:basis-9/12 flex flex-row items-center gap-4 justify-end ">
+            <p className="bg-white/5 text-red-200/50 text-sm p-2 rounded-lg hidden md:block">
               Note: Refreshing of browser will lead to loss of data
             </p>
+            <Tooltip>
+              <TooltipTrigger>
+                <button
+                  disabled
+                  className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
+                >
+                  <Info className="text-red-500" size={20} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="text-red-500" side="bottom">
+                Note: Refreshing of browser will lead to loss of data
+              </TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger>
                 <button
@@ -109,6 +131,7 @@ function App() {
             </Tooltip>
           </div>
         </div>
+
         <div className="h-[48px] w-full" />
         {/* main */}
 
@@ -187,7 +210,9 @@ function App() {
               />
               <button
                 type="submit"
-                disabled={!loading || prompt.length > 0 || fileContent ? false : true}
+                disabled={
+                  !loading || prompt.length > 0 || fileContent ? false : true
+                }
                 className={`p-2 rounded-lg ${
                   prompt.length > 0 || fileContent
                     ? "opacity-100 cursor-pointer"
