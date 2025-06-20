@@ -31,19 +31,20 @@ function App() {
   const [fileContent, setFileContent] = useState<File | null>(null);
   const [link, setLink] = useState("");
   const [prompt, setPrompt] = useState<string>("");
-  const [targetLength, setTargetLength] = useState<string>("")
+  const [targetLength, setTargetLength] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [content, setContent] = useState<boolean>(false);
   const [conversations, setConversations] = useState<ConversationType[]>([
     { response: "", prompt: "" },
   ]);
 
-  const fullPrompt = `${prompt} make it ${targetLength !== "" ? targetLength : "10"} minutes long`
+  const fullPrompt = `${prompt} make it ${
+    targetLength !== "" ? targetLength : "10"
+  } minutes long`;
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPrompt(e.target.value);
-    console.log(prompt);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -65,7 +66,7 @@ function App() {
         formData.append("files", fileContent);
       }
       // https://podcastify-xq9b.onrender.com
-      const res = await fetch("https://podcastify-xq9b.onrender.com/api/genai/generate", {
+      const res = await fetch("http://localhost:3000/api/genai/generate", {
         method: "POST",
         body: formData,
       });
@@ -77,8 +78,6 @@ function App() {
         prompt,
         response: data.data,
       };
-
-      console.log(data);
 
       setConversations((prev) => [...prev, newEntry]);
       setContent(true);
@@ -154,13 +153,14 @@ function App() {
             <Content
               conversations={conversations}
               content={content}
+              file={fileContent}
               loading={loading}
               isGenerating={isGenerating}
             />
           </div>
         )}
         {/* footer */}
-        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center p-4 bg-[#1E1E1E]">
+        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center pb-4 px-4 bg-[#1E1E1E]">
           <form
             onSubmit={(e) => handleSubmit(e)}
             className="flex flex-col items-center justify-between border w-[500px] md:w-170 border-[#2C2C2C] bg-[#232323] px-4 py-3 rounded-2xl gap-2"
@@ -218,13 +218,20 @@ function App() {
                 value={prompt}
                 type="text"
                 placeholder="Enter Focus Prompt..."
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    const currentValue = e.currentTarget.value;
+                    if (currentValue.trim() || fileContent) {
+                      handleSubmit(e as any);
+                    }
+                  }
+                }}
                 className="w-full flex-grow placeholder:text-[#666666] border py-2 border-none outline-none text-[#B0B0B0] bg-transparent w-full"
               />
               <button
                 type="submit"
-                disabled={
-                  !loading || prompt.length > 0 || fileContent ? false : true
-                }
+                disabled={loading || (prompt.length === 0 && !fileContent)}
                 className={`p-2 rounded-lg ${
                   prompt.length > 0 || fileContent
                     ? "opacity-100 cursor-pointer"
@@ -269,7 +276,11 @@ function App() {
                     Enter Target Length
                   </TooltipContent>
                 </Tooltip>
-                <input className="border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9" type="number" onChange={(e)=> setTargetLength(e.target.value)} />
+                <input
+                  className="border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9"
+                  type="number"
+                  onChange={(e) => setTargetLength(e.target.value)}
+                />
               </div>
             </div>
           </form>

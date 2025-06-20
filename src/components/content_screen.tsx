@@ -4,6 +4,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   LoaderCircle,
+  FileText,
 } from "lucide-react";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ interface ContentProps {
   loading: boolean;
   content: boolean;
   isGenerating: boolean;
+  file: File | null
 }
 
 export default function Content({
@@ -25,55 +27,30 @@ export default function Content({
   loading,
   content,
   isGenerating,
+  file
 }: ContentProps) {
   const { copy, copied } = useCopyToClipboard();
   const [voices, setVoices] = useState<string[] | any>();
   const [selectedVoices, setSelectedVoices] = useState<Record<number, string>>(
     {}
   );
-  // const [audioCache, setAudioCache] = useState<Map<string, string>>(new Map());
+  
 
   const [feedback, setFeedback] = useState<
     Record<number, "like" | "dislike" | null>
   >({});
 
-  // const generateAndCacheAudio = async (text: string, voiceId: string) => {
-  //   const key = `${text}-${voiceId}`;
 
-  //   // If already cached, return it
-  //   if (audioCache.has(key)) {
-  //     const cachedUrl = audioCache.get(key)!;
-  //     playAudio(cachedUrl);
-  //     return;
-  //   }
 
-  //   try {
-  //     const response = await fetch(
-  //       "http://localhost:3000/api/genai/generate-audio",
-  //       {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({ text, voice: voiceId }),
-  //       }
-  //     );
 
-  //     const audioBlob = await response.blob();
-  //     const url = URL.createObjectURL(audioBlob);
-
-  //     setAudioCache((prev) => new Map(prev).set(key, url));
-  //     playAudio(url);
-  //   } catch (error) {
-  //     console.error("Audio generation failed:", error);
-  //   }
-  // };
-
+  
   useEffect(() => {
+    // https://podcastify-xq9b.onrender.com
     const fetchData = async () => {
       try {
         const data = await apiRequest<{ voices: string[]; message: string }>({
-          url: "https://podcastify-xq9b.onrender.com/api/elevenlabs/voices",
+          url: "http://localhost:3000/api/openai/voices",
         });
-        console.log("Response:", data);
         if (data && data.voices) {
           setVoices(data.voices);
         }
@@ -117,9 +94,9 @@ export default function Content({
                   <div key={index} className=" flex flex-col gap-5 p-4">
                     <div className="w-full flex flex-col gap-2 items-end justify-end">
                       <div className="min-w-[200px] w-[200px] px-2 py-2 items-start justify-start flex flex-col rounded-xl bg-[#2A2A2A]">
-                        <p className="text-[#BBBBBB] text-sm ">Prompt:</p>
+                        <p className="text-[#BBBBBB] text-sm ">Prompt: {file ? <FileText /> : ""}</p>
                         <p className="text-white font-poppins whitespace-pre-wrap">
-                          {conv.prompt}
+                          {conv.prompt ? conv.prompt : <FileText />}
                         </p>
                       </div>
                       <button
