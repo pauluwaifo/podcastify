@@ -73,7 +73,7 @@ function App() {
   
       const hideTooltipTimer = setTimeout(() => {
         setShowTooltip(false);
-      }, 3000);
+      }, 5000);
   
       return () => clearTimeout(hideTooltipTimer);
     }, 5000);
@@ -298,7 +298,7 @@ function App() {
                     </p>
                   </TooltipTrigger>
                   </button>
-                  <TooltipContent side="left">
+                  <TooltipContent side="top">
                     Enter Podcast Target Min(s) eg. 10
                   </TooltipContent>
                 </Tooltip>
