@@ -101,7 +101,7 @@ function App() {
         formData.append("files", fileContent);
       }
 
-      const res = await fetch("http://localhost:3000/api/genai/generate", {
+      const res = await fetch("https://podcastify-xq9b.onrender.com/api/genai/generate", {
         method: "POST",
         body: formData,
       });
