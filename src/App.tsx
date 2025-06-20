@@ -1,12 +1,12 @@
 import {
   SendHorizontal,
-  FileAudio,
   FileText,
   X,
   Link,
   User2,
   LoaderCircle,
   Info,
+  AudioWaveform,
 } from "lucide-react";
 import "./App.css";
 import { useState } from "react";
@@ -31,11 +31,14 @@ function App() {
   const [fileContent, setFileContent] = useState<File | null>(null);
   const [link, setLink] = useState("");
   const [prompt, setPrompt] = useState<string>("");
+  const [targetLength, setTargetLength] = useState<string>("")
   const [loading, setLoading] = useState<boolean>(false);
   const [content, setContent] = useState<boolean>(false);
   const [conversations, setConversations] = useState<ConversationType[]>([
     { response: "", prompt: "" },
   ]);
+
+  const fullPrompt = `${prompt} make it ${targetLength !== "" ? targetLength : "10"} minutes long`
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
   const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,18 +53,22 @@ function App() {
 
     try {
       const formData = new FormData();
-      formData.append("prompt", prompt);
-      if (fileContent) {
-        formData.append("files", fileContent); // match backend key name
+      formData.append("prompt", fullPrompt);
+
+      // Add links if provided
+      if (link.trim()) {
+        formData.append("urls", link);
       }
 
-      const res = await fetch(
-        "https://podcastify-xq9b.onrender.com/api/genai/generate",
-        {
-          method: "POST",
-          body: formData, // no need for content-type
-        }
-      );
+      // Add files if provided
+      if (fileContent) {
+        formData.append("files", fileContent);
+      }
+      // https://podcastify-xq9b.onrender.com
+      const res = await fetch("https://podcastify-xq9b.onrender.com/api/genai/generate", {
+        method: "POST",
+        body: formData,
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
@@ -76,6 +83,7 @@ function App() {
       setConversations((prev) => [...prev, newEntry]);
       setContent(true);
       setPrompt("");
+      setLink(""); // Clear the link input
       setFileContent(null);
     } catch (error) {
       console.error("API Error:", error);
@@ -250,18 +258,18 @@ function App() {
 
               <div className="flex items-center gap-2 basis-1/2 justify-end">
                 <Tooltip>
-                  <TooltipTrigger>
-                    <button
-                      disabled
+                  <TooltipTrigger className="flex-row flex gap-2">
+                    <div
                       className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
                     >
-                      <FileAudio className="text-white" size={20} />
-                    </button>
+                      <AudioWaveform className="text-white" size={20} />
+                    </div>
                   </TooltipTrigger>
-                  <TooltipContent side="right">
-                    Generate Audio File
+                  <TooltipContent side="left">
+                    Enter Target Length
                   </TooltipContent>
                 </Tooltip>
+                <input className="border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9" type="number" onChange={(e)=> setTargetLength(e.target.value)} />
               </div>
             </div>
           </form>
