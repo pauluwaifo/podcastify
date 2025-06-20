@@ -43,7 +43,7 @@ export default function Content({
     const fetchData = async () => {
       try {
         const data = await apiRequest<{ voices: string[]; message: string }>({
-          url: "https://podcastify-xq9b.onrender.com/api/openai/voices",
+          url: "http://localhost:3000/api/openai/voices",
         });
         if (data && data.voices) {
           setVoices(data.voices);

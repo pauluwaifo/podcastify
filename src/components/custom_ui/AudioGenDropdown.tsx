@@ -53,7 +53,7 @@ export default function AudioGenDropdown({
 
     try {
       const response = await fetch(
-        "https://podcastify-xq9b.onrender.com/api/openai/generate/audio",
+        "http://localhost:3000/api/openai/generate/audio",
         {
           method: "POST",
           headers: {

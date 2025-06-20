@@ -30,6 +30,8 @@ export interface ConversationType {
 
 function App() {
   const [fileContent, setFileContent] = useState<File | null>(null);
+  const [showTooltip, setShowTooltip] = useState<boolean>(false);
+  const [showErrortip, setShowErrortip] = useState<boolean>(false);
   const [link, setLink] = useState("");
   const [prompt, setPrompt] = useState<string>("");
   const [targetLength, setTargetLength] = useState<string>("");
@@ -61,6 +63,26 @@ function App() {
     }
   }, [prompt]);
 
+  useEffect(() => {
+    setShowErrortip(true);
+    setShowTooltip(false);
+  
+    const showTooltipTimer = setTimeout(() => {
+      setShowErrortip(false);
+      setShowTooltip(true);
+  
+      const hideTooltipTimer = setTimeout(() => {
+        setShowTooltip(false);
+      }, 3000);
+  
+      return () => clearTimeout(hideTooltipTimer);
+    }, 5000);
+  
+    return () => clearTimeout(showTooltipTimer);
+  }, []);
+  
+  
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
@@ -79,13 +101,10 @@ function App() {
         formData.append("files", fileContent);
       }
 
-      const res = await fetch(
-        "https://podcastify-xq9b.onrender.com/api/genai/generate",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const res = await fetch("http://localhost:3000/api/genai/generate", {
+        method: "POST",
+        body: formData,
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
@@ -128,7 +147,7 @@ function App() {
             </p>
 
             <div className="block md:hidden">
-              <Tooltip>
+              <Tooltip  open={showErrortip}>
                 <TooltipTrigger>
                   <button
                     disabled
@@ -137,7 +156,7 @@ function App() {
                     <Info className="text-red-500" size={20} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="text-red-500" side="bottom">
+                <TooltipContent className="text-red-500 block md:hidden" side="bottom">
                   Note: Refreshing of browser will lead to loss of data
                 </TooltipContent>
               </Tooltip>
@@ -264,14 +283,21 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2 basis-1/2 justify-end">
-                <Tooltip>
-                  <TooltipTrigger disabled className="flex-row flex gap-2">
+                <Tooltip open={showTooltip}>
+                  <button type="button" className="flex gap-2">
+
+                  <TooltipTrigger
+                  asChild
+                    onClick={(e) => e.preventDefault()}
+                    className="flex-row flex gap-2"
+                  >
                     <p
                       className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
                     >
                       <AudioWaveform className="text-white" size={20} />
                     </p>
                   </TooltipTrigger>
+                  </button>
                   <TooltipContent side="left">
                     Enter Target Length
                   </TooltipContent>
@@ -280,6 +306,7 @@ function App() {
                 <input
                   className="custom-scrollbar border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9"
                   type="number"
+                  placeholder="00"
                   onChange={(e) => setTargetLength(e.target.value)}
                 />
 
@@ -298,7 +325,10 @@ function App() {
                       size={20}
                     />
                   ) : (
-                    <SendHorizontal className="text-black rotate-[-90deg]" size={20} />
+                    <SendHorizontal
+                      className="text-black rotate-[-90deg]"
+                      size={20}
+                    />
                   )}
                 </button>
               </div>
