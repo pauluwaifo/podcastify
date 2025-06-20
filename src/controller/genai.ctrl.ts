@@ -1,7 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { Request, Response } from "express";
 import multer from "multer";
-import fs from "fs/promises";
 import path from "path";
 import pdf from "pdf-parse";
 import dotenv from "dotenv";
@@ -11,16 +10,8 @@ dotenv.config();
 
 const genAI = new GoogleGenAI({apiKey: process.env.GOOGLE_GENAI_API_KEY!});
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Configure multer for memory storage (no file system needed)
+const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: any, cb: any) => {
   const allowedTypes = ['.pdf', '.txt', '.md'];
@@ -76,16 +67,12 @@ const extractTextFromUrl = async (url: string): Promise<string> => {
     
     const html = await response.text();
 
-    // Parse HTML content
     const $ = cheerio.load(html);
     
-    // Remove script and style elements
     $('script, style, nav, header, footer, aside').remove();
     
-    // Extract title
     const title = $('title').text().trim() || 'No title found';
     
-    // Extract main content - try multiple selectors
     let mainContent = '';
     const contentSelectors = [
       'article',
@@ -106,19 +93,16 @@ const extractTextFromUrl = async (url: string): Promise<string> => {
       }
     }
     
-    // Fallback to body content if no main content found
     if (!mainContent) {
       mainContent = $('body').text().trim();
     }
     
-    // Clean up the text
     const cleanedContent = mainContent
       .replace(/\s+/g, ' ')
       .replace(/\n\s*\n/g, '\n')
       .trim();
     
-    // Limit content length to prevent overwhelming the AI
-    const maxLength = 10000; // Adjust as needed
+    const maxLength = 10000;
     const truncatedContent = cleanedContent.length > maxLength 
       ? cleanedContent.substring(0, maxLength) + '...[content truncated]'
       : cleanedContent;
@@ -138,47 +122,45 @@ const extractTextFromUrl = async (url: string): Promise<string> => {
   }
 };
 
-// Extract text from uploaded files
-const extractTextFromFile = async (filePath: string): Promise<string> => {
-  const fileExtension = path.extname(filePath).toLowerCase();
+const extractTextFromBuffer = async (buffer: Buffer, filename: string): Promise<string> => {
+  const fileExtension = path.extname(filename).toLowerCase();
   
   try {
     switch (fileExtension) {
       case '.pdf':
-        const pdfBuffer = await fs.readFile(filePath);
-        const pdfData = await pdf(pdfBuffer);
+        const pdfData = await pdf(buffer);
         return pdfData.text;
         
       case '.txt':
       case '.md':
-        return await fs.readFile(filePath, 'utf-8');
+        return buffer.toString('utf-8');
         
       default:
         throw new Error(`Unsupported file type: ${fileExtension}`);
     }
-  } catch (error) {
-    throw new Error(`Failed to extract text from file: ${error}`);
+  } catch (error: any) {
+    console.error(`Error extracting text from ${filename}:`, error);
+    throw new Error(`Failed to extract text from file: ${error.message}`);
   }
 };
 
-// Validate and parse URLs from request
 const parseUrls = (urlsInput: string | string[]): string[] => {
   if (!urlsInput) return [];
   
   const urlsArray = Array.isArray(urlsInput) ? urlsInput : [urlsInput];
   return urlsArray
-    .flatMap(url => url.split(/[,\s]+/)) // Split by comma or whitespace
+    .flatMap(url => url.split(/[,\s]+/)) 
     .map(url => url.trim())
     .filter(url => url.length > 0);
 };
 
-// Main podcast generation endpoint
+
 export const generateContent = async (req: Request, res: Response) => {
   try {
     const { prompt, urls } = req.body;
     
     if (!prompt) {
-       res.status(400).json({ 
+      res.status(400).json({ 
         error: "Prompt is required" 
       });
     }
@@ -209,18 +191,17 @@ export const generateContent = async (req: Request, res: Response) => {
       }
     }
     
-    // Process uploaded files if any
+    // Process uploaded files if any (now using memory buffers)
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
       const fileTexts: string[] = [];
       
       for (const file of req.files) {
         try {
-          const extractedText = await extractTextFromFile(file.path);
+          // Process file from memory buffer (no file system involved)
+          const extractedText = await extractTextFromBuffer(file.buffer, file.originalname);
           fileTexts.push(`\n=== Content from ${file.originalname} ===\n${extractedText}\n=== End of ${file.originalname} ===\n`);
           processedFiles++;
-          
-          // Clean up uploaded file
-          await fs.unlink(file.path);
+          console.log(`Successfully processed file: ${file.originalname}`);
         } catch (error: any) {
           console.error(`Error processing file ${file.originalname}:`, error.message);
           errors.push(`Failed to process ${file.originalname}: ${error.message}`);
@@ -276,7 +257,6 @@ Generate a complete podcast script now:
       errors: errors.length > 0 ? errors : undefined,
       message
     });
-
 
   } catch (error: any) {
     console.error("Error generating podcast:", error);
