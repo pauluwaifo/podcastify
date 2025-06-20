@@ -31,7 +31,7 @@ export default function Content({
   const [selectedVoices, setSelectedVoices] = useState<Record<number, string>>(
     {}
   );
-  const [audioCache, setAudioCache] = useState<Map<string, string>>(new Map());
+  // const [audioCache, setAudioCache] = useState<Map<string, string>>(new Map());
 
   const [feedback, setFeedback] = useState<
     Record<number, "like" | "dislike" | null>

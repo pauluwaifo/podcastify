@@ -5,7 +5,6 @@ import {
   X,
   Link,
   User2,
-  Loader,
   LoaderCircle,
 } from "lucide-react";
 import "./App.css";
@@ -15,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "./components/ui/tooltip";
-import { apiRequest } from "./hooks/useApi";
+// import { apiRequest } from "./hooks/useApi";
 
 import LinkInputDropdown from "./components/custom_ui/LinkInputDropdown";
 import UploadFileDropDown from "./components/custom_ui/UploadFileDropDown";

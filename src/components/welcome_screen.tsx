@@ -1,4 +1,4 @@
-import { ScrollText, FileAudio, Play, MicVocal } from "lucide-react";
+import { ScrollText, FileAudio, Play, } from "lucide-react";
 import Card from "./custom_ui/card";
 
 
