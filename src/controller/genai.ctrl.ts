@@ -277,7 +277,6 @@ Generate a complete podcast script now:
       message
     });
 
-    console.log(podcastScript);
 
   } catch (error: any) {
     console.error("Error generating podcast:", error);
