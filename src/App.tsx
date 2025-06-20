@@ -299,7 +299,7 @@ function App() {
                   </TooltipTrigger>
                   </button>
                   <TooltipContent side="left">
-                    Enter Target Length
+                    Enter Podcast Target Min(s) eg. 10
                   </TooltipContent>
                 </Tooltip>
 
