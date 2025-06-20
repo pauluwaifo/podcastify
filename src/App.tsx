@@ -86,10 +86,11 @@ function App() {
       <div className="shadow-xl w-full h-full border border-[#2C2C2C] rounded-none md:rounded-lg bg-[#1E1E1E] relative overflow-hidden">
         {/* topbar */}
         <div className="absolute left-0 top-0 w-full flex items-center flex-wrap mb-8 p-1 bg-[#232323] rounded-t-lg border-b border-[#2C2C2C]">
-          <div className="basis-3/12 px-4">
-            <h1 className="text-white text-lg font-bold">Podcast Generator</h1>
+          <div className="basis-2/12 md:basis-3/12 px-4">
+            <h1 className="text-white text-lg font-bold hidden md:block">Podcast Generator</h1>
+            <h1 className="text-white text-lg font-bold sm:hidden block">PDG</h1>
           </div>
-          <div className="basis-9/12 flex flex-row items-center gap-4 justify-end">
+          <div className="basis-10/12 md:basis-9/12 flex flex-row items-center gap-4 justify-end">
             <p className="bg-white/5 text-red-200/50 text-sm p-2 rounded-lg">
               Note: Refreshing of browser will lead to loss of data
             </p>
@@ -124,7 +125,7 @@ function App() {
           </div>
         )}
         {/* footer */}
-        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center pb-4 bg-[#1E1E1E]">
+        <div className="absolute bottom-0 left-0 w-full flex items-center justify-center p-4 bg-[#1E1E1E]">
           <form
             onSubmit={(e) => handleSubmit(e)}
             className="flex flex-col items-center justify-between border w-[500px] md:w-170 border-[#2C2C2C] bg-[#232323] px-4 py-3 rounded-2xl gap-2"
