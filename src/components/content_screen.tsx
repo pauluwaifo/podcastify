@@ -7,7 +7,7 @@ import {
   FileText,
 } from "lucide-react";
 import { useCopyToClipboard } from "../hooks/useCopyToClipboard";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import type { ConversationType } from "../App";
@@ -19,7 +19,6 @@ interface ContentProps {
   loading: boolean;
   content: boolean;
   isGenerating: boolean;
-  file: File | null
 }
 
 export default function Content({
@@ -27,29 +26,24 @@ export default function Content({
   loading,
   content,
   isGenerating,
-  file
 }: ContentProps) {
   const { copy, copied } = useCopyToClipboard();
   const [voices, setVoices] = useState<string[] | any>();
   const [selectedVoices, setSelectedVoices] = useState<Record<number, string>>(
     {}
   );
-  
+  const generatingRef = useRef<HTMLDivElement>(null);
 
   const [feedback, setFeedback] = useState<
     Record<number, "like" | "dislike" | null>
   >({});
 
-
-
-
-  
   useEffect(() => {
     // https://podcastify-xq9b.onrender.com
     const fetchData = async () => {
       try {
         const data = await apiRequest<{ voices: string[]; message: string }>({
-          url: "http://localhost:3000/api/openai/voices",
+          url: "https://podcastify-xq9b.onrender.com/api/openai/voices",
         });
         if (data && data.voices) {
           setVoices(data.voices);
@@ -61,6 +55,13 @@ export default function Content({
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (content && isGenerating && generatingRef.current) {
+      generatingRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [isGenerating, content]);
+  
 
   const handleLike = (index: number) => {
     setFeedback((prev) => ({ ...prev, [index]: "like" }));
@@ -93,10 +94,18 @@ export default function Content({
                 return (
                   <div key={index} className=" flex flex-col gap-5 p-4">
                     <div className="w-full flex flex-col gap-2 items-end justify-end">
-                      <div className="min-w-[200px] w-[200px] px-2 py-2 items-start justify-start flex flex-col rounded-xl bg-[#2A2A2A]">
-                        <p className="text-[#BBBBBB] text-sm ">Prompt: {file ? <FileText /> : ""}</p>
+                      <div className="min-w-[200px] max-w-[400px] text-wrap px-2 py-2 items-start justify-start flex flex-col rounded-xl bg-[#2A2A2A]">
+                        <p className="text-[#BBBBBB] text-sm ">Prompt:</p>
                         <p className="text-white font-poppins whitespace-pre-wrap">
-                          {conv.prompt ? conv.prompt : <FileText />}
+                          {conv.prompt && conv.filesProcessed > 0 ? (
+                            <>
+                              <FileText /> {conv.prompt}
+                            </>
+                          ) : conv.prompt && conv.filesProcessed < 1 ? (
+                            conv.prompt
+                          ) : (
+                            <FileText />
+                          )}
                         </p>
                       </div>
                       <button
@@ -120,7 +129,7 @@ export default function Content({
                         </button>
                         <AudioGenDropdown
                           voices={voices}
-                          text = {conv.response}
+                          text={conv.response}
                           selectedVoice={selectedVoices[index]}
                           setSelectedVoice={(voiceId: string) =>
                             setSelectedVoices((prev) => ({
@@ -153,7 +162,7 @@ export default function Content({
             </div>
           )}
           {content && isGenerating ? (
-            <div className="flex flex items-center justify-center w-full text-white text-lg font-poppins gap-2">
+            <div ref={generatingRef} className="flex flex items-center justify-center w-full text-white text-lg font-poppins gap-2">
               Generating
               <LoaderCircle size={30} className="animate-spin text-white" />
             </div>

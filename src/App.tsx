@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
   SendHorizontal,
   FileText,
@@ -15,7 +16,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "./components/ui/tooltip";
-// import { apiRequest } from "./hooks/useApi";
 
 import LinkInputDropdown from "./components/custom_ui/LinkInputDropdown";
 import UploadFileDropDown from "./components/custom_ui/UploadFileDropDown";
@@ -25,6 +25,7 @@ import Content from "./components/content_screen";
 export interface ConversationType {
   prompt: string;
   response: string;
+  filesProcessed: number;
 }
 
 function App() {
@@ -35,17 +36,30 @@ function App() {
   const [loading, setLoading] = useState<boolean>(false);
   const [content, setContent] = useState<boolean>(false);
   const [conversations, setConversations] = useState<ConversationType[]>([
-    { response: "", prompt: "" },
+    { response: "", prompt: "", filesProcessed: 0 },
   ]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const fullPrompt = `${prompt} make it ${
     targetLength !== "" ? targetLength : "10"
   } minutes long`;
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
-  const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPrompt(e.target.value);
   };
+
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+  
+    if (prompt.trim() === "") {
+      el.style.height = "40px";
+    } else {
+      el.style.height = "auto"; 
+      el.style.height = `${el.scrollHeight}px`; 
+    }
+  }, [prompt]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,21 +69,23 @@ function App() {
     try {
       const formData = new FormData();
       formData.append("prompt", fullPrompt);
+      setPrompt("");
 
-      // Add links if provided
       if (link.trim()) {
         formData.append("urls", link);
       }
 
-      // Add files if provided
       if (fileContent) {
         formData.append("files", fileContent);
       }
-      // https://podcastify-xq9b.onrender.com
-      const res = await fetch("http://localhost:3000/api/genai/generate", {
-        method: "POST",
-        body: formData,
-      });
+
+      const res = await fetch(
+        "https://podcastify-xq9b.onrender.com/api/genai/generate",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
@@ -77,11 +93,11 @@ function App() {
       const newEntry = {
         prompt,
         response: data.data,
+        filesProcessed: data.filesProcessed,
       };
 
       setConversations((prev) => [...prev, newEntry]);
       setContent(true);
-      setPrompt("");
       setLink(""); // Clear the link input
       setFileContent(null);
     } catch (error) {
@@ -153,7 +169,6 @@ function App() {
             <Content
               conversations={conversations}
               content={content}
-              file={fileContent}
               loading={loading}
               isGenerating={isGenerating}
             />
@@ -213,10 +228,10 @@ function App() {
               )}
             </div>
             <div className="flex justify-between w-full">
-              <input
+              <textarea
+                ref={textareaRef}
                 onChange={(e) => handlePromptChange(e)}
                 value={prompt}
-                type="text"
                 placeholder="Enter Focus Prompt..."
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
@@ -227,8 +242,9 @@ function App() {
                     }
                   }
                 }}
-                className="w-full flex-grow placeholder:text-[#666666] border py-2 border-none outline-none text-[#B0B0B0] bg-transparent w-full"
+                className="w-full px-4  rounded-md bg-transparent text-white placeholder:text-[#666] outline-none resize-none overflow-y-auto custom-scrollbar max-h-100"
               />
+
               <button
                 type="submit"
                 disabled={loading || (prompt.length === 0 && !fileContent)}
@@ -277,7 +293,7 @@ function App() {
                   </TooltipContent>
                 </Tooltip>
                 <input
-                  className="border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9"
+                  className="custom-scrollbar border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9"
                   type="number"
                   onChange={(e) => setTargetLength(e.target.value)}
                 />
