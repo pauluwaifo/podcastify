@@ -265,17 +265,18 @@ function App() {
 
               <div className="flex items-center gap-2 basis-1/2 justify-end">
                 <Tooltip>
-                  <TooltipTrigger className="flex-row flex gap-2">
-                    <div
+                  <TooltipTrigger disabled className="flex-row flex gap-2">
+                    <p
                       className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
                     >
                       <AudioWaveform className="text-white" size={20} />
-                    </div>
+                    </p>
                   </TooltipTrigger>
                   <TooltipContent side="left">
                     Enter Target Length
                   </TooltipContent>
                 </Tooltip>
+
                 <input
                   className="custom-scrollbar border-[#2C2C2C] placeholder:text-[#666666] outline-none text-[#B0B0B0] border rounded-lg px-4 w-20 h-9"
                   type="number"
