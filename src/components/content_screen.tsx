@@ -13,6 +13,7 @@ import "react-loading-skeleton/dist/skeleton.css";
 import type { ConversationType } from "../App";
 import { apiRequest } from "../hooks/useApi";
 import AudioGenDropdown from "./custom_ui/AudioGenDropdown";
+import { useFreeTTSVoices } from "../hooks/useFreeTTSVoices";
 
 interface ContentProps {
   conversations: ConversationType[];
@@ -28,33 +29,17 @@ export default function Content({
   isGenerating,
 }: ContentProps) {
   const { copy, copied } = useCopyToClipboard();
-  const [voices, setVoices] = useState<string[] | any>();
   const [selectedVoices, setSelectedVoices] = useState<Record<number, string>>(
     {}
   );
   const generatingRef = useRef<HTMLDivElement>(null);
+  const {voices} = useFreeTTSVoices()
 
   const [feedback, setFeedback] = useState<
     Record<number, "like" | "dislike" | null>
   >({});
 
-  useEffect(() => {
-    // https://podcastify-xq9b.onrender.com
-    const fetchData = async () => {
-      try {
-        const data = await apiRequest<{ voices: string[]; message: string }>({
-          url: "https://podcastify-xq9b.onrender.com/api/openai/voices",
-        });
-        if (data && data.voices) {
-          setVoices(data.voices);
-        }
-      } catch (error) {
-        console.error("Fetch failed:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
+ 
 
   useEffect(() => {
     if (content && isGenerating && generatingRef.current) {

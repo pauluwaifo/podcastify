@@ -3,8 +3,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from "../ui/dropdown-menu";
-import { ChevronDown, LoaderCircle, Play, Speech } from "lucide-react";
-import { useState } from "react";
+import { ChevronDown, LoaderCircle, Play, Speech, Square } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 
 interface AudioGenDropdownProps {
   setSelectedVoice: (voiceId: string) => void;
@@ -16,6 +16,7 @@ interface AudioGenDropdownProps {
 interface Voice {
   name: string;
   voiceId: string;
+  lang?: string;
 }
 
 export default function AudioGenDropdown({
@@ -25,65 +26,157 @@ export default function AudioGenDropdown({
   text,
 }: AudioGenDropdownProps) {
   const [loading, setLoading] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const synthRef = useRef<SpeechSynthesis | null>(null);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const selectedVoiceName = voices.find(
     (v) => v.voiceId === selectedVoice
   )?.name;
 
-  const [audioCache, setAudioCache] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      synthRef.current = window.speechSynthesis;
+      
+      const loadVoices = () => {
+        const voices = synthRef.current?.getVoices() || [];
+        setAvailableVoices(voices);
+      };
 
-  const playAudio = (url: string) => {
-    const audio = new Audio(url);
-    audio.play().catch((err) => {
-      console.error("Audio playback failed:", err);
-    });
-  };
+      loadVoices();
+      
+      if (synthRef.current) {
+        synthRef.current.onvoiceschanged = loadVoices;
+      }
+    }
+  }, []);
 
-  const generateAndCacheAudio = async (text: string, voiceId: string) => {
-    const key = `${text}-${voiceId}`;
+  const findBestVoice = (voiceId: string): SpeechSynthesisVoice | null => {
+    if (availableVoices.length === 0) return null;
 
-    setLoading(true);
+    let voice = availableVoices.find(v => 
+      v.name.toLowerCase() === voiceId.toLowerCase()
+    );
 
-    // Check if audio is already cached
-    if (audioCache.has(key)) {
-      const cachedUrl = audioCache.get(key)!;
-      playAudio(cachedUrl);
-      return;
+    if (!voice) {
+      voice = availableVoices.find(v => 
+        v.name.toLowerCase().includes(voiceId.toLowerCase())
+      );
     }
 
-    try {
-      const response = await fetch(
-        "https://podcastify-xq9b.onrender.com/api/openai/generate/audio",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text, voice: voiceId }),
-        }
+    if (!voice) {
+      voice = availableVoices.find(v => 
+        v.lang.toLowerCase().includes(voiceId.toLowerCase())
       );
+    }
 
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
+    if (!voice && voiceId.includes('female')) {
+      voice = availableVoices.find(v => 
+        v.name.toLowerCase().includes('female') || 
+        v.name.toLowerCase().includes('woman') ||
+        v.name.toLowerCase().includes('samantha') ||
+        v.name.toLowerCase().includes('zira') ||
+        v.name.toLowerCase().includes('susan')
+      );
+    }
+    
+    if (!voice && voiceId.includes('male')) {
+      voice = availableVoices.find(v => 
+        v.name.toLowerCase().includes('male') || 
+        v.name.toLowerCase().includes('david') ||
+        v.name.toLowerCase().includes('mark') ||
+        v.name.toLowerCase().includes('daniel')
+      );
+    }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+    if (!voice && voiceId.includes('british')) {
+      voice = availableVoices.find(v => 
+        v.lang.includes('en-GB') || 
+        v.name.toLowerCase().includes('british')
+      );
+    }
 
-      // Update cache and play audio
-      setAudioCache((prevCache) => {
-        const updatedCache = new Map(prevCache);
-        updatedCache.set(key, audioUrl);
-        return updatedCache;
-      });
+    return voice || availableVoices[0];
+  };
 
-      playAudio(audioUrl);
-    } catch (error) {
-      console.error("Audio generation failed:", error);
-    } finally {
+  const stopAudio = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+      setIsPlaying(false);
       setLoading(false);
     }
   };
+
+  const generateAudio = async (text: string, voiceId: string) => {
+    if (!synthRef.current || !text.trim()) return;
+
+    stopAudio();
+    
+    setLoading(true);
+
+    try {
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      const selectedVoice = findBestVoice(voiceId);
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      utterance.onstart = () => {
+        setLoading(false);
+        setIsPlaying(true);
+      };
+
+      utterance.onend = () => {
+        setIsPlaying(false);
+      };
+
+      utterance.onerror = (error) => {
+        console.error('Speech synthesis error:', error);
+        setIsPlaying(false);
+        setLoading(false);
+      };
+
+      utterance.onpause = () => {
+        setIsPlaying(false);
+      };
+
+      utterance.onresume = () => {
+        setIsPlaying(true);
+      };
+
+      // Store reference for potential cancellation
+      utteranceRef.current = utterance;
+
+      // Start speaking
+      synthRef.current.speak(utterance);
+
+    } catch (error) {
+      console.error("Audio generation failed:", error);
+      setLoading(false);
+      setIsPlaying(false);
+    }
+  };
+
+  const handlePlayStop = () => {
+    if (isPlaying || loading) {
+      stopAudio();
+    } else {
+      generateAudio(text, selectedVoice);
+    }
+  };
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      stopAudio();
+    };
+  }, []);
 
   return (
     <DropdownMenu>
@@ -105,6 +198,9 @@ export default function AudioGenDropdown({
               ({selectedVoiceName})
             </span>
           )}
+          <div className="text-xs text-[#888] mt-1">
+            Free TTS • {availableVoices.length} voices available
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -124,7 +220,11 @@ export default function AudioGenDropdown({
                 {voices.map((v) => (
                   <button
                     key={v.voiceId}
-                    onClick={() => setSelectedVoice(v.voiceId)}
+                    onClick={() => {
+                      setSelectedVoice(v.voiceId);
+                      // Stop current audio when switching voices
+                      if (isPlaying) stopAudio();
+                    }}
                     className={`text-sm text-white px-3 py-[2px] rounded-md text-left w-full ${
                       selectedVoice === v.voiceId
                         ? "bg-white/10"
@@ -132,6 +232,11 @@ export default function AudioGenDropdown({
                     }`}
                   >
                     {v.name}
+                    {v.lang && (
+                      <span className="text-xs text-[#888] ml-2">
+                        ({v.lang})
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -139,22 +244,31 @@ export default function AudioGenDropdown({
           </DropdownMenu>
 
           <button
-            onClick={() => generateAndCacheAudio(text, selectedVoice)}
-            disabled={loading || !text}
+            onClick={handlePlayStop}
+            disabled={!text?.trim()}
             className={`flex items-center justify-between gap-2 text-sm bg-white/10 hover:bg-white/20 px-3 py-1 rounded-md w-full ${
-              loading || !text ? "opacity-50 cursor-not-allowed" : ""
+              !text?.trim() ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
             <>
-              Generate
+              {isPlaying ? "Stop" : "Generate"}
               {loading ? (
                 <LoaderCircle className="animate-spin" size={16} />
+              ) : isPlaying ? (
+                <Square size={14} />
               ) : (
                 <Play size={14} />
               )}
             </>
           </button>
         </div>
+
+        {/* Voice quality indicator */}
+        {availableVoices.length > 0 && (
+          <div className="mt-2 text-xs text-[#666]">
+            Device voices: {availableVoices.filter(v => v.localService).length} local, {availableVoices.filter(v => !v.localService).length} online
+          </div>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
