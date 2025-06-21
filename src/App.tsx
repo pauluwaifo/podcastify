@@ -66,22 +66,20 @@ function App() {
   useEffect(() => {
     setShowErrortip(true);
     setShowTooltip(false);
-  
+
     const showTooltipTimer = setTimeout(() => {
       setShowErrortip(false);
       setShowTooltip(true);
-  
+
       const hideTooltipTimer = setTimeout(() => {
         setShowTooltip(false);
       }, 5000);
-  
+
       return () => clearTimeout(hideTooltipTimer);
     }, 5000);
-  
+
     return () => clearTimeout(showTooltipTimer);
   }, []);
-  
-  
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -101,10 +99,13 @@ function App() {
         formData.append("files", fileContent);
       }
 
-      const res = await fetch("https://podcastify-xq9b.onrender.com/api/genai/generate", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        "https://podcastify-xq9b.onrender.com/api/genai/generate",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error);
@@ -147,16 +148,20 @@ function App() {
             </p>
 
             <div className="block md:hidden">
-              <Tooltip  open={showErrortip}>
+              <Tooltip open={showErrortip} onOpenChange={setShowErrortip}>
                 <TooltipTrigger>
                   <button
+                    onChange={() => setShowErrortip(true)}
                     disabled
                     className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
                   >
                     <Info className="text-red-500" size={20} />
                   </button>
                 </TooltipTrigger>
-                <TooltipContent className="text-red-500 block md:hidden" side="bottom">
+                <TooltipContent
+                  className="text-red-500 block md:hidden"
+                  side="bottom"
+                >
                   Note: Refreshing of browser will lead to loss of data
                 </TooltipContent>
               </Tooltip>
@@ -283,20 +288,22 @@ function App() {
               </div>
 
               <div className="flex items-center gap-2 basis-1/2 justify-end">
-                <Tooltip open={showTooltip}>
+                <Tooltip open={showTooltip} onOpenChange={setShowTooltip}>
                   <button type="button" className="flex gap-2">
-
-                  <TooltipTrigger
-                  asChild
-                    onClick={(e) => e.preventDefault()}
-                    className="flex-row flex gap-2"
-                  >
-                    <p
-                      className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
+                    <TooltipTrigger
+                      asChild
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowTooltip(true);
+                      }}
+                      className="flex-row flex gap-2"
                     >
-                      <AudioWaveform className="text-white" size={20} />
-                    </p>
-                  </TooltipTrigger>
+                      <p
+                        className={`p-2 rounded-lg bg-white/5 backdrop-blur-sm opacity-50 cursor-not-allowed`}
+                      >
+                        <AudioWaveform className="text-white" size={20} />
+                      </p>
+                    </TooltipTrigger>
                   </button>
                   <TooltipContent side="top">
                     Enter Podcast Target Min(s) eg. 10
