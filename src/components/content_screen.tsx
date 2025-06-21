@@ -11,7 +11,6 @@ import { useEffect, useState, useRef } from "react";
 import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import type { ConversationType } from "../App";
-import { apiRequest } from "../hooks/useApi";
 import AudioGenDropdown from "./custom_ui/AudioGenDropdown";
 import { useFreeTTSVoices } from "../hooks/useFreeTTSVoices";
 
