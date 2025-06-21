@@ -1,5 +1,5 @@
 import express from "express";
-import { getVoices, generateAudio } from "../controller/openai.ctrl";
+import { getVoices, generateAudio } from "../controller/tts.ctrl";
 const router = express.Router();
 
 router.get("/voices", getVoices);

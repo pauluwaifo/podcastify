@@ -7,7 +7,7 @@ import path from "path";
 import { notFound } from "./middleware/notFound";
 import { errorHandler } from "./middleware/errorHandler";
 import genaiRoutes from "./routes/genai.route";
-import openaiRoute from "./routes/openai.route";
+import ttsRoute from "./routes/tts";
 
 dotenv.config();
 
@@ -26,7 +26,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/genai", genaiRoutes);
-app.use("/api/openai", openaiRoute);
+app.use("/api/tts", ttsRoute);
 
 app.use(notFound);
 app.use(errorHandler);
